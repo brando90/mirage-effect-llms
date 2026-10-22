@@ -13,16 +13,10 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      min-width: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; min-width: 0; }
 
     :root {
-      color-scheme: dark light;
-      interpolate-size: allow-keywords;
+      color-scheme: light;
       scrollbar-gutter: stable;
       text-wrap: pretty;
       overflow-wrap: break-word;
@@ -32,126 +26,54 @@
       -webkit-text-size-adjust: 100%;
       -webkit-tap-highlight-color: transparent;
 
-      --narrow: 20;
-      --wide: 76;
-      --size-narrow: 1;
-      --size-wide: 1.125;
-      --ratio-narrow: 1.2;
-      --ratio-wide: 1.28;
-      --fluid: clamp(0rem, (100vw - var(--narrow) * 1rem) / (var(--wide) - var(--narrow)), 1rem);
-      --at-narrow: calc(var(--size-narrow) * (1rem - var(--fluid)));
-      --at-wide: calc(var(--size-wide) * var(--fluid));
-      --step--1: calc(var(--step-0) / var(--ratio-narrow));
-      --step-0: calc(var(--at-narrow) + var(--at-wide));
-      --step-1: calc(var(--at-narrow) * var(--ratio-narrow) + var(--at-wide) * var(--ratio-wide));
-      --step-2: calc(var(--at-narrow) * pow(var(--ratio-narrow), 2) + var(--at-wide) * pow(var(--ratio-wide), 2));
-      --step-3: calc(var(--at-narrow) * pow(var(--ratio-narrow), 3) + var(--at-wide) * pow(var(--ratio-wide), 3));
-      --step-4: calc(var(--at-narrow) * pow(var(--ratio-narrow), 4) + var(--at-wide) * pow(var(--ratio-wide), 4));
-      --step-5: calc(var(--at-narrow) * pow(var(--ratio-narrow), 5) + var(--at-wide) * pow(var(--ratio-wide), 5));
-
-      --space-2xs: clamp(0.35rem, 0.3rem + 0.25vw, 0.55rem);
-      --space-xs: clamp(0.55rem, 0.47rem + 0.4vw, 0.85rem);
-      --space-s: clamp(0.85rem, 0.72rem + 0.65vw, 1.35rem);
-      --space-m: clamp(1.2rem, 0.95rem + 1.25vw, 2.15rem);
-      --space-l: clamp(1.8rem, 1.3rem + 2.5vw, 3.7rem);
-      --space-xl: clamp(3rem, 2rem + 5vw, 6.8rem);
-
-      --bg: oklch(14% 0.045 266);
-      --surface: oklch(20% 0.045 266 / 0.82);
-      --surface-strong: oklch(24% 0.055 266 / 0.95);
-      --surface-soft: oklch(100% 0 none / 0.06);
-      --text: oklch(96% 0.018 260);
-      --muted: oklch(76% 0.045 260);
-      --line: oklch(100% 0 none / 0.14);
-      --blue: oklch(72% 0.17 250);
-      --cyan: oklch(80% 0.14 205);
-      --green: oklch(78% 0.17 155);
-      --yellow: oklch(84% 0.16 86);
-      --red: oklch(70% 0.2 20);
-      --violet: oklch(75% 0.18 305);
-      --shadow: oklch(0% 0 none / 0.34);
-      --radius-s: 0.85rem;
-      --radius-m: 1.15rem;
-      --radius-l: 1.6rem;
-      --content: 68rem;
-      --breakout: 84rem;
-      --gutter: clamp(1rem, 0.55rem + 2vw, 2rem);
+      --bg: oklch(98.5% 0.01 255);
+      --paper: oklch(100% 0 none);
+      --ink: oklch(22% 0.035 255);
+      --muted: oklch(48% 0.035 255);
+      --line: oklch(88% 0.02 255);
+      --blue: oklch(50% 0.13 255);
+      --green: oklch(54% 0.12 155);
+      --red: oklch(58% 0.16 24);
+      --yellow: oklch(70% 0.13 82);
+      --soft-blue: color-mix(in oklch, var(--blue) 8%, white);
+      --soft-red: color-mix(in oklch, var(--red) 8%, white);
+      --shadow: oklch(18% 0.02 255 / 0.08);
+      --radius: 0.85rem;
+      --content: 66rem;
+      --breakout: 78rem;
+      --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+      --space-xs: clamp(0.55rem, 0.45rem + 0.35vw, 0.8rem);
+      --space-s: clamp(0.85rem, 0.7rem + 0.7vw, 1.25rem);
+      --space-m: clamp(1.25rem, 1rem + 1.2vw, 2rem);
+      --space-l: clamp(2rem, 1.3rem + 3vw, 4rem);
+      --space-xl: clamp(3rem, 2rem + 5vw, 6rem);
       --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
     }
 
-    html {
-      scroll-padding-block-start: var(--space-l);
-      overscroll-behavior-y: none;
-    }
-
-    @media (any-pointer: coarse) {
-      html { overscroll-behavior-y: auto; }
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      html { scroll-behavior: smooth; }
-    }
+    html { scroll-padding-block-start: var(--space-l); }
+    @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 
     body {
       margin: 0;
       min-block-size: 100svh;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 5%, color-mix(in oklch, var(--blue) 34%, transparent), transparent 30rem),
-        radial-gradient(circle at 85% 8%, color-mix(in oklch, var(--violet) 28%, transparent), transparent 31rem),
-        radial-gradient(circle at 50% 100%, color-mix(in oklch, var(--yellow) 14%, transparent), transparent 36rem),
-        linear-gradient(180deg, oklch(16% 0.05 266), var(--bg));
+      color: var(--ink);
+      background: var(--bg);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: var(--step-0);
+      font-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
       line-height: 1.65;
     }
 
-    img,
-    svg,
-    video {
-      display: block;
-      max-inline-size: 100%;
-      block-size: auto;
-    }
+    img, svg, video { display: block; max-inline-size: 100%; block-size: auto; }
+    button, a, [role="button"] { touch-action: manipulation; }
+    button, [role="button"] { user-select: none; -webkit-user-select: none; }
+    :focus-visible { outline: max(2px, 0.08em) solid var(--blue); outline-offset: 0.25em; }
 
-    button,
-    a,
-    [role="button"] {
-      touch-action: manipulation;
-    }
-
-    button,
-    [role="button"] {
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    :focus-visible {
-      outline: max(2px, 0.08em) solid var(--yellow);
-      outline-offset: 0.25em;
-    }
-
-    h1,
-    h2,
-    h3 {
-      margin-block: 0;
-      text-wrap: balance;
-      line-height: 1.02;
-      letter-spacing: -0.045em;
-    }
-
-    h1 { font-size: clamp(3.1rem, 1.4rem + 8.2vw, 8rem); }
-    h2 { font-size: var(--step-3); }
-    h3 { font-size: var(--step-1); }
-
-    p,
-    ul,
-    ol,
-    figure,
-    table { margin-block: 0; }
-
-    a { color: var(--cyan); }
+    h1, h2, h3 { margin-block: 0; text-wrap: balance; line-height: 1.08; letter-spacing: -0.035em; }
+    h1 { font-size: clamp(2.5rem, 1.5rem + 5vw, 5.75rem); max-inline-size: 12ch; }
+    h2 { font-size: clamp(1.55rem, 1.2rem + 1.7vw, 2.6rem); }
+    h3 { font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.25rem); }
+    p, ul, ol, figure, table { margin-block: 0; }
+    a { color: var(--blue); }
 
     .content-grid {
       display: grid;
@@ -162,356 +84,90 @@
         minmax(0, calc((var(--breakout) - var(--content)) / 2)) [breakout-end]
         minmax(var(--gutter), 1fr) [full-width-end];
     }
-
     .content-grid > * { grid-column: content; }
     .content-grid > .breakout { grid-column: breakout; }
-    .content-grid > .full-width {
-      grid-column: full-width;
-      display: grid;
-      grid-template-columns: inherit;
-    }
-    .full-width > * { grid-column: content; }
 
-    .hero {
-      padding-block: var(--space-xl) var(--space-l);
-      overflow-x: clip;
-    }
-
+    .hero { padding-block: var(--space-xl) var(--space-l); }
     .hero-card {
-      position: relative;
-      isolation: isolate;
       display: grid;
       gap: var(--space-m);
-      padding: clamp(1.25rem, 0.65rem + 3vw, 3rem);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-l);
-      background:
-        linear-gradient(135deg, color-mix(in oklch, var(--surface-strong) 88%, transparent), color-mix(in oklch, var(--surface) 78%, transparent)),
-        radial-gradient(circle at 100% 0%, color-mix(in oklch, var(--blue) 28%, transparent), transparent 18rem);
-      box-shadow: 0 1.5rem 5rem var(--shadow);
-    }
-
-    .hero-card::before {
-      content: "";
-      position: absolute;
-      inset: 1px;
-      z-index: -1;
-      border-radius: calc(var(--radius-l) - 1px);
-      background: linear-gradient(135deg, color-mix(in oklch, var(--blue) 15%, transparent), transparent 38%, color-mix(in oklch, var(--violet) 12%, transparent));
-      pointer-events: none;
+      padding-block-end: var(--space-l);
+      border-block-end: 1px solid var(--line);
     }
 
     .kicker {
-      display: inline-flex;
-      inline-size: fit-content;
-      align-items: baseline;
-      gap: 0.5em;
-      padding-block: 0.45rem;
-      padding-inline: 0.75rem;
-      border: 1px solid color-mix(in oklch, var(--cyan) 38%, transparent);
-      border-radius: 999px;
-      color: var(--cyan);
-      background: color-mix(in oklch, var(--cyan) 10%, transparent);
-      font-size: var(--step--1);
+      color: var(--blue);
+      font-size: 0.82rem;
       font-weight: 760;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .lead {
-      max-inline-size: 56rem;
-      color: color-mix(in oklch, var(--text) 90%, var(--muted));
-      font-size: var(--step-1);
-      line-height: 1.5;
-    }
+    .lead { max-inline-size: 55rem; color: var(--muted); font-size: clamp(1.15rem, 1.05rem + 0.55vw, 1.45rem); line-height: 1.48; }
+    .summary-grid, .card-grid, .test-grid { display: grid; gap: var(--space-s); grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
 
-    .summary-grid,
-    .card-grid,
-    .test-grid {
-      display: grid;
-      gap: var(--space-s);
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-    }
-
-    .stat {
-      display: grid;
-      gap: var(--space-2xs);
-      padding: var(--space-s);
+    .stat, .card, .notice, .mermaid-shell, .chart-shell, .math-shell {
       border: 1px solid var(--line);
-      border-radius: var(--radius-m);
-      background: var(--surface-soft);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 0.75rem 2.25rem var(--shadow);
     }
+    .stat { display: grid; gap: 0.2rem; padding: var(--space-s); box-shadow: none; }
+    .stat b { color: var(--blue); font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.4rem); line-height: 1; font-variant-numeric: tabular-nums; }
 
-    .stat b {
-      color: var(--text);
-      font-size: var(--step-2);
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-
-    section {
-      padding-block: var(--space-l);
-    }
-
-    .section-head {
-      display: grid;
-      gap: var(--space-xs);
-      max-inline-size: 54rem;
-      margin-block-end: var(--space-m);
-    }
-
-    .claim {
-      color: var(--text);
-      font-weight: 820;
-      font-size: var(--step-1);
-      line-height: 1.35;
-    }
-
+    section { padding-block: var(--space-l); }
+    .section-head { display: grid; gap: var(--space-xs); max-inline-size: 55rem; margin-block-end: var(--space-m); }
+    .claim { color: var(--ink); font-weight: 720; font-size: clamp(1.05rem, 1rem + 0.35vw, 1.25rem); line-height: 1.4; }
     .muted { color: var(--muted); }
 
-    .card {
-      --pad: var(--space-s);
-      --radius: var(--radius-m);
-      position: relative;
-      isolation: isolate;
-      display: grid;
-      gap: var(--space-xs);
-      padding: var(--pad);
-      border: 1px solid var(--line);
-      border-radius: calc(var(--radius) + var(--pad) / 4);
-      background: linear-gradient(180deg, var(--surface-strong), var(--surface));
-    }
+    .card { display: grid; gap: var(--space-xs); padding: var(--space-s); box-shadow: none; }
+    .card h3 { color: var(--ink); }
 
-    .card::before,
-    .card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      border-radius: inherit;
-      pointer-events: none;
-    }
+    .notice { display: flex; align-items: start; gap: 0.75em; padding: var(--space-s); border-inline-start: 0.35rem solid var(--yellow); box-shadow: none; }
+    .notice svg { flex: none; inline-size: 1em; block-size: 1lh; color: var(--yellow); }
 
-    .card::before {
-      box-shadow: 0 0.4rem 1rem oklch(0% 0 none / 0.12), 0 1.5rem 3rem oklch(0% 0 none / 0.18);
-    }
+    .mermaid-shell, .chart-shell, .math-shell { padding: var(--space-s); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-gutter: stable; }
+    .mermaid { min-inline-size: min(52rem, 100%); padding: var(--space-s); border-radius: calc(var(--radius) - 0.2rem); background: oklch(99% 0.01 255); color: var(--ink); }
+    .math-shell, .chart-shell { display: grid; gap: var(--space-s); }
+    .formula-note { display: grid; gap: var(--space-xs); padding: var(--space-s); border-radius: calc(var(--radius) - 0.2rem); background: var(--soft-blue); }
+    .katex-display { overflow-x: auto; overflow-y: hidden; }
 
-    .card::after {
-      opacity: 0;
-      box-shadow: 0 0.8rem 2rem oklch(0% 0 none / 0.16), 0 2rem 5rem oklch(0% 0 none / 0.28);
-    }
+    .control-panel { display: grid; gap: var(--space-s); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); align-items: end; }
+    .control { display: grid; gap: 0.35rem; padding: var(--space-xs); border: 1px solid var(--line); border-radius: calc(var(--radius) - 0.25rem); background: oklch(98% 0.01 255); }
+    label { color: var(--ink); font-size: 0.78rem; font-weight: 760; letter-spacing: 0.05em; text-transform: uppercase; }
+    input[type="range"] { inline-size: 100%; accent-color: var(--blue); }
+    .control-value { color: var(--blue); font-weight: 760; font-variant-numeric: tabular-nums; }
 
-    @media (hover: hover) and (pointer: fine) {
-      .card:hover::before { opacity: 0; }
-      .card:hover::after { opacity: 1; }
-    }
+    .legend { display: flex; flex-wrap: wrap; gap: var(--space-xs); color: var(--muted); font-size: 0.92rem; }
+    .legend span { display: inline-flex; align-items: baseline; gap: 0.4em; }
+    .dot { flex: none; inline-size: 0.75em; block-size: 0.75em; border-radius: 50%; background: currentColor; }
+    #chart svg { min-inline-size: 48rem; }
 
-    @media (prefers-reduced-motion: no-preference) {
-      .card::before,
-      .card::after { transition: opacity 0.28s var(--ease-out); }
-      .control-panel input { transition: accent-color 0.18s var(--ease-out); }
-    }
-
-    .card h3 {
-      color: var(--text);
-      font-size: var(--step-1);
-    }
-
-    .notice {
-      display: flex;
-      align-items: start;
-      gap: 0.75em;
-      padding: var(--space-s);
-      border: 1px solid color-mix(in oklch, var(--yellow) 42%, transparent);
-      border-inline-start: 0.35rem solid var(--yellow);
-      border-radius: var(--radius-m);
-      background: color-mix(in oklch, var(--yellow) 9%, transparent);
-    }
-
-    .notice svg {
-      flex: none;
-      inline-size: 1em;
-      block-size: 1lh;
-      color: var(--yellow);
-    }
-
-    .mermaid-shell,
-    .chart-shell,
-    .math-shell {
-      padding: var(--space-s);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-l);
-      background: color-mix(in oklch, var(--surface-strong) 86%, transparent);
-      box-shadow: 0 1.2rem 4rem var(--shadow);
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scrollbar-gutter: stable;
-    }
-
-    .mermaid {
-      min-inline-size: min(52rem, 100%);
-      padding: var(--space-s);
-      border-radius: var(--radius-m);
-      background:
-        radial-gradient(circle at 10% 0%, color-mix(in oklch, var(--blue) 22%, transparent), transparent 18rem),
-        linear-gradient(135deg, oklch(98% 0.015 250), oklch(94% 0.03 275) 55%, oklch(96% 0.035 90));
-      color: oklch(18% 0.04 266);
-    }
-
-    .math-shell {
-      display: grid;
-      gap: var(--space-s);
-    }
-
-    .formula-note {
-      display: grid;
-      gap: var(--space-xs);
-      padding: var(--space-s);
-      border-radius: var(--radius-m);
-      background: color-mix(in oklch, var(--blue) 10%, transparent);
-    }
-
-    .katex-display {
-      overflow-x: auto;
-      overflow-y: hidden;
-    }
-
-    .chart-shell {
-      display: grid;
-      gap: var(--space-s);
-    }
-
-    .control-panel {
-      display: grid;
-      gap: var(--space-s);
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-      align-items: end;
-    }
-
-    .control {
-      display: grid;
-      gap: var(--space-2xs);
-      padding: var(--space-xs);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-s);
-      background: var(--surface-soft);
-    }
-
-    label {
-      color: var(--text);
-      font-size: var(--step--1);
-      font-weight: 760;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-    }
-
-    input[type="range"] {
-      inline-size: 100%;
-      accent-color: var(--cyan);
-    }
-
-    .control-value {
-      color: var(--cyan);
-      font-weight: 820;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-xs);
-      color: var(--muted);
-      font-size: var(--step--1);
-    }
-
-    .legend span {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 0.4em;
-    }
-
-    .dot {
-      flex: none;
-      inline-size: 0.75em;
-      block-size: 0.75em;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    #chart svg {
-      min-inline-size: 48rem;
-    }
-
-    .split {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-m);
-      align-items: start;
-    }
-
+    .split { display: flex; flex-wrap: wrap; gap: var(--space-m); align-items: start; }
     .split > * { flex: 1 1 24rem; }
+    table { inline-size: 100%; border-collapse: collapse; overflow-wrap: break-word; font-size: 0.94rem; }
+    th, td { padding-block: 0.75rem; padding-inline: 0.65rem; border-block-end: 1px solid var(--line); text-align: start; vertical-align: top; }
+    th { color: var(--ink); font-weight: 760; }
+    td { color: var(--muted); }
+    td:nth-child(2), td:nth-child(3) { font-variant-numeric: tabular-nums; }
 
-    table {
-      inline-size: 100%;
-      border-collapse: collapse;
-      overflow-wrap: break-word;
-      font-size: var(--step--1);
-    }
-
-    th,
-    td {
-      padding-block: 0.75rem;
-      padding-inline: 0.65rem;
-      border-block-end: 1px solid var(--line);
-      text-align: start;
-      vertical-align: top;
-    }
-
-    th {
-      color: var(--text);
-      font-weight: 780;
-    }
-
-    td {
-      color: var(--muted);
-    }
-
-    td:nth-child(2),
-    td:nth-child(3) {
-      font-variant-numeric: tabular-nums;
-    }
-
-    .do-dont {
-      display: grid;
-      gap: var(--space-s);
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-    }
-
-    .do-dont ul {
-      display: grid;
-      gap: var(--space-xs);
-      padding-inline-start: 1.2em;
-    }
-
-    .footer {
-      padding-block: var(--space-l);
-      color: var(--muted);
-      font-size: var(--step--1);
-    }
+    .do-dont { display: grid; gap: var(--space-s); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+    .do-dont ul { display: grid; gap: var(--space-xs); padding-inline-start: 1.2em; }
+    .footer { padding-block: var(--space-l); color: var(--muted); font-size: 0.92rem; }
   </style>
 </head>
 <body>
   <header class="hero content-grid">
     <div class="hero-card breakout">
-      <span class="kicker">Metric artifact, not magic</span>
+      <span class="kicker">Measurement artifact</span>
       <h1>The Mirage Effect in Large Language Models</h1>
       <p class="lead">
-        Some “emergent abilities” in large language models (LLMs) can be mirages: the underlying model improves smoothly with scale, but a hard scoring rule hides that progress until it suddenly crosses a threshold.
+        Some reported “emergent abilities” in large language models (LLMs) can be explained by measurement: the underlying capability improves gradually, while a thresholded benchmark only records success after a cutoff is crossed.
       </p>
       <div class="summary-grid">
         <div class="stat"><b>1</b><span>smooth latent capability curve</span></div>
         <div class="stat"><b>1</b><span>discontinuous or thresholded metric</span></div>
-        <div class="stat"><b>1</b><span>fake-looking phase transition</span></div>
+        <div class="stat"><b>1</b><span>apparent phase transition</span></div>
       </div>
     </div>
   </header>
@@ -519,8 +175,8 @@
   <main>
     <section class="content-grid">
       <div class="section-head">
-        <h2>The whole trick is the measurement rule.</h2>
-        <p class="claim">The mirage effect is the gap between the curve the model is actually climbing and the curve your benchmark chooses to show you.</p>
+        <h2>The core mechanism is measurement.</h2>
+        <p class="claim">The mirage effect is the difference between a smooth underlying capability curve and the discontinuous curve produced by a thresholded evaluation metric.</p>
       </div>
 
       <div class="card-grid">
@@ -533,16 +189,16 @@
           <p>Exact match, multiple-choice pass/fail, or “all steps correct” scores can stay flat, then jump when the smooth variable crosses a cutoff.</p>
         </article>
         <article class="card">
-          <h3>What fools us</h3>
-          <p>The plot looks like a new ability appeared at one model size, even though a smoother metric would have shown steady progress all along.</p>
+          <h3>Why the plot can mislead</h3>
+          <p>The plot can suggest that a capability appeared at one model size, even when a smoother metric would show steady progress.</p>
         </article>
       </div>
     </section>
 
     <section class="content-grid">
       <div class="section-head">
-        <h2>A mirage is made by thresholding a smooth signal.</h2>
-        <p class="claim">The causal story is not “nothing, nothing, nothing, intelligence.” It is “small gains, hidden gains, visible gains.”</p>
+        <h2>Thresholding a smooth signal can create a mirage.</h2>
+        <p class="claim">The causal story is gradual improvement plus a reporting rule that hides progress below a cutoff.</p>
       </div>
 
       <div class="mermaid-shell breakout">
@@ -571,7 +227,7 @@ flowchart LR
 
     <section class="content-grid">
       <div class="section-head">
-        <h2>The equation is just a step function.</h2>
+        <h2>The mathematical form is a step function.</h2>
         <p class="claim">If the score is binary, the reported ability can jump even when the underlying ability does not.</p>
       </div>
 
@@ -640,7 +296,7 @@ flowchart LR
 
     <section class="content-grid">
       <div class="section-head">
-        <h2>The diagnostic is simple: change the score.</h2>
+        <h2>The diagnostic is to change the score.</h2>
         <p class="claim">A real scientific claim about emergence should survive reasonable changes in measurement.</p>
       </div>
 
@@ -655,7 +311,7 @@ flowchart LR
           </ul>
         </article>
         <article class="card">
-          <h3>Do not confuse these phenomena</h3>
+          <h3>Distinguish related phenomena</h3>
           <ul>
             <li>A hallucination is a false generated claim.</li>
             <li>Prompt brittleness is sensitivity to wording.</li>
@@ -669,8 +325,8 @@ flowchart LR
       <div class="notice breakout">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 17h2v-2h-2v2Zm0-4h2V7h-2v6Zm1 9a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z"/></svg>
         <div>
-          <p class="claim">Bottom line: emergence may be real in some cases, but this plot shape alone does not prove it.</p>
-          <p class="muted">The mirage effect says to inspect the continuous variables underneath a thresholded score before telling a story about sudden new abilities.</p>
+          <p class="claim">Bottom line: a sharp benchmark curve alone does not establish a sudden new capability.</p>
+          <p class="muted">The mirage effect motivates inspecting continuous measures beneath thresholded scores before interpreting a sharp jump as a new ability.</p>
         </div>
       </div>
     </section>
