@@ -96,10 +96,17 @@
     }
 
     .kicker {
+      display: inline-flex;
+      inline-size: fit-content;
+      padding-block: 0.45rem;
+      padding-inline: 0.75rem;
+      border: 1px solid color-mix(in oklch, var(--blue) 30%, white);
+      border-radius: 999px;
       color: var(--blue);
-      font-size: 0.82rem;
-      font-weight: 760;
-      letter-spacing: 0.08em;
+      background: var(--soft-blue);
+      font-size: clamp(0.9rem, 0.82rem + 0.35vw, 1.12rem);
+      font-weight: 900;
+      letter-spacing: 0.11em;
       text-transform: uppercase;
     }
 
