@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Mirage Effect in Large Language Models</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(17, 24, 39, 0.92);
+      --panel2: rgba(30, 41, 59, 0.82);
+      --text: #e5e7eb;
+      --muted: #a7b0c0;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #fb7185;
+      --purple: #c084fc;
+      --border: rgba(255,255,255,0.13);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 5%, rgba(96, 165, 250, 0.25), transparent 28rem),
+        radial-gradient(circle at 88% 8%, rgba(192, 132, 252, 0.18), transparent 26rem),
+        radial-gradient(circle at 55% 92%, rgba(251, 191, 36, 0.13), transparent 30rem),
+        var(--bg);
+      line-height: 1.6;
+    }
+
+    header, main, footer { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; }
+    header { padding: 4.5rem 0 2rem; }
+
+    h1 {
+      max-width: 980px;
+      margin: 0 0 1rem;
+      font-size: clamp(2.4rem, 7vw, 5.8rem);
+      line-height: 0.94;
+      letter-spacing: -0.07em;
+    }
+
+    h2 { margin: 0 0 0.75rem; font-size: clamp(1.35rem, 3vw, 2rem); line-height: 1.15; letter-spacing: -0.03em; }
+    h3 { margin: 1.2rem 0 0.3rem; }
+    p { color: #d5d9e2; }
+    .lead { max-width: 850px; color: #edf2ff; font-size: 1.22rem; }
+
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem; margin: 1rem 0; }
+    .card {
+      grid-column: span 12;
+      background: linear-gradient(180deg, var(--panel), rgba(15, 23, 42, 0.94));
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      box-shadow: 0 22px 65px rgba(0,0,0,0.25);
+    }
+
+    @media (min-width: 860px) {
+      .half { grid-column: span 6; }
+      .third { grid-column: span 4; }
+      .two-thirds { grid-column: span 8; }
+    }
+
+    .claim { color: #fff; font-weight: 850; font-size: 1.06rem; }
+    .pillrow { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1rem 0 0; }
+    .pill { border: 1px solid var(--border); border-radius: 999px; padding: 0.35rem 0.65rem; color: #e5e7eb; background: rgba(255,255,255,0.06); font-size: 0.94rem; }
+
+    .callout {
+      border-left: 4px solid var(--yellow);
+      padding: 0.8rem 1rem;
+      background: rgba(251, 191, 36, 0.08);
+      border-radius: 0.8rem;
+      color: #f8fafc;
+    }
+
+    .mermaid {
+      background:
+        radial-gradient(circle at 12% 5%, rgba(96,165,250,0.20), transparent 17rem),
+        linear-gradient(135deg, #f8fafc 0%, #eef2ff 48%, #fff7ed 100%);
+      color: #111827;
+      border: 1px solid rgba(96,165,250,0.35);
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 18px 45px rgba(15,23,42,0.25);
+    }
+
+    .mathbox { background: rgba(255,255,255,0.055); border: 1px solid var(--border); border-radius: 1rem; padding: 1rem; }
+    .katex-display { overflow-x: auto; overflow-y: hidden; }
+
+    .chart-wrap { background: rgba(255,255,255,0.045); border: 1px solid var(--border); border-radius: 1rem; padding: 1rem; overflow-x: auto; }
+    #chart svg, #metricChart svg { min-width: 760px; }
+    .controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    input[type="range"] { width: min(430px, 100%); }
+    .legend { display: flex; gap: 1rem; flex-wrap: wrap; color: var(--muted); font-size: 0.92rem; margin-bottom: 0.75rem; }
+    .dot { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 50%; margin-right: 0.35rem; vertical-align: -0.08rem; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 0.7rem; }
+    th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 0.65rem; vertical-align: top; }
+    th { color: white; }
+    td { color: #d5d9e2; }
+
+    footer { color: var(--muted); padding: 2rem 0 4rem; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Mirage Effect in Large Language Models</h1>
+    <p class="lead">
+      The mirage effect is the false appearance of sudden, emergent ability in large language models (LLMs). The key point is not that the model suddenly learned a new skill at one scale; it is that a discontinuous metric can turn smooth improvement into a sharp-looking jump.
+    </p>
+  </header>
+
+  <main>
+    <section class="grid">
+      <article class="card two-thirds">
+        <h2>The actual phenomenon</h2>
+        <p class="claim">A capability can improve smoothly while the reported benchmark score looks like it appears from nowhere.</p>
+        <p>
+          Suppose an LLM gradually gets better at assigning higher probability to the correct answer as model scale increases. If the benchmark reports only exact match, multiple choice accuracy, or another thresholded score, then many small improvements remain invisible until they cross the threshold.
+        </p>
+        <p>
+          That threshold crossing creates the visual illusion of emergence: below the threshold the model looks incompetent, above it the model looks competent, even if the underlying skill changed continuously.
+        </p>
+        <div class="pillrow">
+          <span class="pill">Smooth latent improvement</span>
+          <span class="pill">Discontinuous metric</span>
+          <span class="pill">Apparent sudden jump</span>
+        </div>
+      </article>
+
+      <aside class="card third">
+        <h2>What it is not</h2>
+        <p class="claim">This is not mainly about hallucination or prompt brittleness.</p>
+        <p>
+          Hallucination means producing false content. Prompt brittleness means performance changes under rewording. The mirage effect discussed here is about measurement: the curve you see depends on the metric you choose.
+        </p>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>How a metric creates the mirage</h2>
+        <p class="claim">The discontinuity is introduced by the evaluation rule, not necessarily by the model's internal learning curve.</p>
+        <div class="mermaid">
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Inter, ui-sans-serif, system-ui", "primaryColor": "#dbeafe", "primaryTextColor": "#0f172a", "primaryBorderColor": "#60a5fa", "lineColor": "#64748b", "secondaryColor": "#fef3c7", "tertiaryColor": "#ffe4e6"}} }%%
+flowchart LR
+  A[Increase model scale] --> B[Correct-answer probability rises smoothly]
+  B --> C{Metric choice}
+  C -->|continuous score| D[Smooth performance curve]
+  C -->|thresholded score| E[Flat curve, then sudden jump]
+  E --> F((Mirage effect))
+  D --> G[No mysterious emergence needed]
+  F --> H[Looks like an ability appeared abruptly]
+
+  classDef scale fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#0f172a;
+  classDef metric fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#0f172a;
+  classDef smooth fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#052e16;
+  classDef mirage fill:#ffe4e6,stroke:#fb7185,stroke-width:4px,color:#881337;
+  class A,B scale;
+  class C metric;
+  class D,G smooth;
+  class E,F,H mirage;
+        </div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="card half">
+        <h2>The math in one picture</h2>
+        <p class="claim">A hard threshold can convert a smooth variable into a step function.</p>
+        <div class="mathbox">
+          <p>
+            Let \(s(N)\) be a smooth latent skill score for a model with size \(N\), and let \(\tau\) be the threshold required for a benchmark item to count as correct.
+          </p>
+          <p>
+            \[
+            \boxed{A(N) = \mathbf{1}\{s(N) > \tau\}}
+            \]
+          </p>
+          <p>
+            Here \(A(N)\) is the reported accuracy for one item. Even if \(s(N)\) rises gradually, \(A(N)\) jumps from 0 to 1 the instant \(s(N)\) crosses \(\tau\).
+          </p>
+        </div>
+      </article>
+
+      <article class="card half">
+        <h2>A tiny numeric example</h2>
+        <p class="claim">The hidden scores can be boringly smooth while the visible metric looks dramatic.</p>
+        <table>
+          <thead><tr><th>Model scale</th><th>Latent score \(s(N)\)</th><th>Exact-match result if \(\tau=0.70\)</th></tr></thead>
+          <tbody>
+            <tr><td>Small</td><td>0.61</td><td>0 = wrong</td></tr>
+            <tr><td>Medium</td><td>0.66</td><td>0 = wrong</td></tr>
+            <tr><td>Large</td><td>0.71</td><td>1 = correct</td></tr>
+            <tr><td>Huge</td><td>0.76</td><td>1 = correct</td></tr>
+          </tbody>
+        </table>
+        <p>
+          The latent score rises by the same 0.05 each step. The exact-match metric hides the first two gains and then reports a sudden breakthrough.
+        </p>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Interactive D3: smooth ability, jumpy metric</h2>
+        <p class="claim">Move the threshold and watch the same underlying model curve produce different stories about emergence.</p>
+        <p>
+          The blue line is a smooth latent capability. The red points are what a thresholded benchmark reports. Change the threshold to see how the apparent emergence point moves.
+        </p>
+        <div class="chart-wrap">
+          <div class="controls">
+            <label for="threshold"><strong>Metric threshold:</strong> <span id="thresholdLabel">0.70</span></label>
+            <input id="threshold" type="range" min="45" max="90" value="70" />
+          </div>
+          <div class="legend">
+            <span><span class="dot" style="background: var(--blue)"></span>Smooth latent skill</span>
+            <span><span class="dot" style="background: var(--red)"></span>Thresholded reported score</span>
+            <span><span class="dot" style="background: var(--yellow)"></span>Chosen threshold</span>
+          </div>
+          <div id="chart" aria-label="D3 chart showing smooth latent ability and thresholded apparent emergence"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="card half">
+        <h2>Why this matters</h2>
+        <p class="claim">The same experiment can support two different narratives depending on whether the metric preserves smooth progress.</p>
+        <p>
+          If you plot only a thresholded score, you may conclude that a new ability emerged at a critical scale. If you inspect a continuous measure such as probability assigned to the correct answer, loss, calibration, or partial credit, the same result may look like ordinary scaling.
+        </p>
+        <p>
+          The conservative interpretation is: before claiming emergence, check whether the effect survives a metric change.
+        </p>
+      </article>
+
+      <article class="card half">
+        <h2>How to test whether emergence is real</h2>
+        <p class="claim">A genuine discontinuity should not disappear when the measurement rule changes.</p>
+        <ul>
+          <li>Plot continuous scores, not only exact-match accuracy.</li>
+          <li>Check whether the jump location changes under different thresholds.</li>
+          <li>Use partial-credit metrics when the task has degrees of correctness.</li>
+          <li>Report the raw scaling curve alongside any binary success rate.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Bottom line</h2>
+        <p class="claim">The mirage effect says that some “emergent abilities” may be artifacts of how we score models.</p>
+        <p>
+          The model may still be improving, and scale may still matter. The correction is narrower and sharper: do not infer a sudden new capability from a sudden jump in a discontinuous metric until you have checked the underlying continuous behavior.
+        </p>
+        <p><strong>TL;DR:</strong> The mirage effect in LLMs is the illusion that a capability appears abruptly with scale when the underlying ability may have improved smoothly. Thresholded metrics such as exact match can hide gradual progress and then reveal it as a fake phase transition.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    Built as a single HTML document using Mermaid for the causal diagram, KaTeX for the threshold equations, and D3 for the interactive metric visualization.
+  </footer>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, securityLevel: "loose", flowchart: { curve: "basis", padding: 18 }, theme: "base" });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+
+      const width = 780;
+      const height = 390;
+      const margin = { top: 28, right: 34, bottom: 54, left: 58 };
+      const scales = d3.range(1, 13);
+      const latent = scales.map(n => ({
+        n,
+        skill: 1 / (1 + Math.exp(-0.55 * (n - 6.8)))
+      }));
+
+      const svg = d3.select("#chart")
+        .append("svg")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("role", "img");
+
+      const x = d3.scaleLinear().domain([1, 12]).range([margin.left, width - margin.right]);
+      const y = d3.scaleLinear().domain([0, 1]).range([height - margin.bottom, margin.top]);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(x).ticks(12).tickFormat(d => `M${d}`));
+
+      svg.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format(".0%")));
+
+      svg.append("text")
+        .attr("x", margin.left)
+        .attr("y", 18)
+        .attr("fill", "#e5e7eb")
+        .attr("font-weight", 750)
+        .text("Capability vs. reported score");
+
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height - 12)
+        .attr("fill", "#a7b0c0")
+        .attr("text-anchor", "middle")
+        .text("Model scale, from smaller to larger");
+
+      const line = d3.line()
+        .x(d => x(d.n))
+        .y(d => y(d.skill))
+        .curve(d3.curveMonotoneX);
+
+      svg.append("path")
+        .datum(latent)
+        .attr("fill", "none")
+        .attr("stroke", "#60a5fa")
+        .attr("stroke-width", 4)
+        .attr("d", line);
+
+      svg.selectAll("circle.latent")
+        .data(latent)
+        .join("circle")
+        .attr("class", "latent")
+        .attr("cx", d => x(d.n))
+        .attr("cy", d => y(d.skill))
+        .attr("r", 4.5)
+        .attr("fill", "#60a5fa");
+
+      const dynamic = svg.append("g");
+
+      function update(thresholdInt) {
+        const tau = thresholdInt / 100;
+        d3.select("#thresholdLabel").text(tau.toFixed(2));
+
+        const reported = latent.map(d => ({ n: d.n, score: d.skill >= tau ? 1 : 0, skill: d.skill }));
+
+        dynamic.selectAll("line.threshold")
+          .data([tau])
+          .join("line")
+          .attr("class", "threshold")
+          .attr("x1", margin.left)
+          .attr("x2", width - margin.right)
+          .attr("y1", d => y(d))
+          .attr("y2", d => y(d))
+          .attr("stroke", "#fbbf24")
+          .attr("stroke-width", 2.5)
+          .attr("stroke-dasharray", "7 6");
+
+        dynamic.selectAll("path.reported")
+          .data([reported])
+          .join("path")
+          .attr("class", "reported")
+          .attr("fill", "none")
+          .attr("stroke", "#fb7185")
+          .attr("stroke-width", 4)
+          .attr("stroke-linejoin", "round")
+          .attr("d", d3.line().x(d => x(d.n)).y(d => y(d.score)).curve(d3.curveStepAfter));
+
+        dynamic.selectAll("circle.reported-point")
+          .data(reported)
+          .join("circle")
+          .attr("class", "reported-point")
+          .attr("cx", d => x(d.n))
+          .attr("cy", d => y(d.score))
+          .attr("r", 5)
+          .attr("fill", "#fb7185");
+
+        const first = reported.find(d => d.score === 1);
+        dynamic.selectAll("text.annotation")
+          .data(first ? [first] : [])
+          .join("text")
+          .attr("class", "annotation")
+          .attr("x", d => Math.min(x(d.n) + 14, width - 210))
+          .attr("y", d => y(1) + 26)
+          .attr("fill", "#fecdd3")
+          .attr("font-weight", 750)
+          .text(d => `apparent jump at M${d.n}`);
+      }
+
+      d3.select("#threshold").on("input", event => update(+event.target.value));
+      update(70);
+    });
+  </script>
+</body>
+</html>
