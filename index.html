@@ -150,6 +150,20 @@
     .dot { flex: none; inline-size: 0.75em; block-size: 0.75em; border-radius: 50%; background: currentColor; }
     #chart svg { min-inline-size: 48rem; }
 
+    .surface-demo { display: grid; gap: var(--space-s); }
+    .surface-stage {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) - 0.2rem);
+      background:
+        linear-gradient(180deg, oklch(99% 0.01 255), oklch(96% 0.018 255));
+      overflow: clip;
+      cursor: grab;
+    }
+    .surface-stage:active { cursor: grabbing; }
+    .surface-stage canvas { inline-size: 100%; block-size: auto; aspect-ratio: 16 / 10; }
+    .surface-caption { color: var(--muted); font-size: 0.92rem; }
+
     .split { display: flex; flex-wrap: wrap; gap: var(--space-m); align-items: start; }
     .split > * { flex: 1 1 24rem; }
     table { inline-size: 100%; border-collapse: collapse; overflow-wrap: break-word; font-size: 0.94rem; }
@@ -298,6 +312,37 @@ flowchart LR
           <span style="color: var(--yellow)"><span class="dot"></span>Chosen threshold</span>
         </div>
         <div id="chart" aria-label="Interactive chart showing that a smooth latent capability can become an apparent emergent jump after thresholding"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="section-head">
+        <h2>A 3D view shows where the mirage comes from.</h2>
+        <p class="claim">The surface is smooth latent skill across model scale and task difficulty. The transparent plane is the benchmark cutoff; everything above it is counted as success.</p>
+      </div>
+
+      <div class="chart-shell breakout surface-demo">
+        <div class="control-panel">
+          <div class="control">
+            <label for="surfaceThreshold">3D success threshold</label>
+            <input id="surfaceThreshold" type="range" min="35" max="90" value="70" />
+            <span class="control-value" id="surfaceThresholdValue">0.70</span>
+          </div>
+          <div class="control">
+            <label for="surfaceTilt">surface tilt</label>
+            <input id="surfaceTilt" type="range" min="18" max="68" value="42" />
+            <span class="control-value" id="surfaceTiltValue">42°</span>
+          </div>
+        </div>
+        <div class="legend">
+          <span style="color: var(--green)"><span class="dot"></span>Counted as success</span>
+          <span style="color: var(--red)"><span class="dot"></span>Still scored as failure</span>
+          <span style="color: var(--yellow)"><span class="dot"></span>Threshold plane</span>
+        </div>
+        <div class="surface-stage" id="surfaceStage" aria-label="Interactive 3D surface of latent skill and benchmark threshold">
+          <canvas id="surfaceCanvas" width="1100" height="690"></canvas>
+        </div>
+        <p class="surface-caption">Drag the surface to rotate it. Raise the threshold and the smooth surface produces a later, sharper-looking success frontier.</p>
       </div>
     </section>
 
@@ -493,6 +538,124 @@ flowchart LR
       d3.select("#threshold").on("input", update);
       d3.select("#steepness").on("input", update);
       update();
+
+      const canvas = document.querySelector("#surfaceCanvas");
+      const ctx = canvas.getContext("2d");
+      const stage = document.querySelector("#surfaceStage");
+      let rotY = -0.72;
+      let dragging = false;
+      let lastX = 0;
+
+      function skillSurface(x, y) {
+        return 1 / (1 + Math.exp(-8.5 * (x - y + 0.12)));
+      }
+
+      function projectPoint(x, y, z, tiltDeg) {
+        const scale = 360;
+        const cx = canvas.width / 2;
+        const cy = canvas.height * 0.56;
+        const rx = -tiltDeg * Math.PI / 180;
+        const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+        const cosX = Math.cos(rx), sinX = Math.sin(rx);
+        let px = (x - 0.5) * 2.2;
+        let py = (y - 0.5) * 1.6;
+        let pz = (z - 0.5) * 1.35;
+        const x1 = px * cosY - pz * sinY;
+        const z1 = px * sinY + pz * cosY;
+        const y1 = py * cosX - z1 * sinX;
+        const z2 = py * sinX + z1 * cosX;
+        return { x: cx + x1 * scale, y: cy + y1 * scale, depth: z2 };
+      }
+
+      function drawPolygon(points, fill, stroke = "rgba(30, 50, 80, 0.18)") {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (const p of points.slice(1)) ctx.lineTo(p.x, p.y);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      function drawLabel(text, point, color) {
+        ctx.fillStyle = color;
+        ctx.font = "700 24px Inter, system-ui, sans-serif";
+        ctx.fillText(text, point.x, point.y);
+      }
+
+      function renderSurface() {
+        const tau = +document.querySelector("#surfaceThreshold").value / 100;
+        const tilt = +document.querySelector("#surfaceTilt").value;
+        document.querySelector("#surfaceThresholdValue").textContent = tau.toFixed(2);
+        document.querySelector("#surfaceTiltValue").textContent = `${tilt}°`;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "oklch(99% 0.01 255)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const cells = [];
+        const steps = 28;
+        for (let i = 0; i < steps; i++) {
+          for (let j = 0; j < steps; j++) {
+            const corners = [
+              [i / steps, j / steps],
+              [(i + 1) / steps, j / steps],
+              [(i + 1) / steps, (j + 1) / steps],
+              [i / steps, (j + 1) / steps]
+            ];
+            const pts3 = corners.map(([x, y]) => [x, y, skillSurface(x, y)]);
+            const pts = pts3.map(([x, y, z]) => projectPoint(x, y, z, tilt));
+            const zAvg = pts3.reduce((a, p) => a + p[2], 0) / 4;
+            const depth = pts.reduce((a, p) => a + p.depth, 0) / 4;
+            const alpha = 0.42 + zAvg * 0.34;
+            const fill = zAvg >= tau
+              ? `rgba(38, 166, 110, ${alpha})`
+              : `rgba(210, 80, 76, ${0.28 + (1 - zAvg) * 0.2})`;
+            cells.push({ pts, depth, fill });
+          }
+        }
+        cells.sort((a, b) => a.depth - b.depth).forEach(c => drawPolygon(c.pts, c.fill));
+
+        const plane = [
+          projectPoint(0, 0, tau, tilt),
+          projectPoint(1, 0, tau, tilt),
+          projectPoint(1, 1, tau, tilt),
+          projectPoint(0, 1, tau, tilt)
+        ];
+        drawPolygon(plane, "rgba(232, 176, 52, 0.25)", "rgba(170, 120, 30, 0.65)");
+
+        const origin = projectPoint(0, 0, 0, tilt);
+        const scaleEnd = projectPoint(1.05, 0, 0, tilt);
+        const diffEnd = projectPoint(0, 1.08, 0, tilt);
+        const skillEnd = projectPoint(0, 0, 1.06, tilt);
+        ctx.strokeStyle = "rgba(30, 50, 80, 0.65)";
+        ctx.lineWidth = 2;
+        for (const end of [scaleEnd, diffEnd, skillEnd]) {
+          ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+        }
+        drawLabel("model scale", scaleEnd, "oklch(22% 0.035 255)");
+        drawLabel("task difficulty", diffEnd, "oklch(22% 0.035 255)");
+        drawLabel("latent skill", skillEnd, "oklch(22% 0.035 255)");
+      }
+
+      document.querySelector("#surfaceThreshold").addEventListener("input", renderSurface);
+      document.querySelector("#surfaceTilt").addEventListener("input", renderSurface);
+      stage.addEventListener("pointerdown", event => {
+        dragging = true;
+        lastX = event.clientX;
+        stage.setPointerCapture(event.pointerId);
+      });
+      stage.addEventListener("pointermove", event => {
+        if (!dragging) return;
+        rotY += (event.clientX - lastX) * 0.008;
+        lastX = event.clientX;
+        renderSurface();
+      });
+      stage.addEventListener("pointerup", () => { dragging = false; });
+      stage.addEventListener("pointercancel", () => { dragging = false; });
+      renderSurface();
     });
   </script>
 </body>
